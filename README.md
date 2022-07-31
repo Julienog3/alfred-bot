@@ -1,9 +1,5 @@
-# Alfred Bot de la Deep Corp
+# Alfred Bot
 
-## Installation 
+Discord bot in Node.js for the Deep Corp' server
 
-> npm install
-
-## Lancement 
-
-> npm run start 
+![Winnterzuko](https://thumbs.gfycat.com/ClutteredBareFairybluebird-max-1mb.gif)
