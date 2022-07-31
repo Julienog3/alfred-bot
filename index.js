@@ -4,7 +4,6 @@ const { Client, Intents, MessageEmbed, MessageAttachment, Collection  } = requir
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const Sequelize = require('sequelize');
 const Canvas = require('canvas');
 
 const fs = require('node:fs');
@@ -12,35 +11,16 @@ const path = require('node:path');
 
 require('dotenv').config()
 
+const sequelize = require('./sequelize');
+
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
 // Create proxy for Twitter
 const proxy = process.env.HTTP_PROXY || 'https://1.1.1.1:3000';
 const httpsAgent = new HttpsProxyAgent(proxy);
 
-// Create database
-const sequelize = new Sequelize('database', 'user', 'password', {
-	host: 'localhost',
-	dialect: 'sqlite',
-	logging: false,
-	// SQLite only
-	storage: 'database.sqlite',
-});
-
 // Users Sequelize Model
-const Users = sequelize.define('users', {
-    id: {
-        type: Sequelize.INTEGER,
-        unique: true,
-        primaryKey: true
-    },    
-    username: {
-        type: Sequelize.STRING,
-    },
-    count: {
-        type: Sequelize.INTEGER,
-    }
-})
+const Users = sequelize.model('user');
 
 // Create client Discord
 const client = new Client({

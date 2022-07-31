@@ -1,29 +1,9 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const Canvas = require('canvas');
 const { MessageAttachment  } = require('discord.js');
-const Sequelize = require('sequelize');
+const sequelize = require('../sequelize');
 
-const sequelize = new Sequelize('database', 'user', 'password', {
-	host: 'localhost',
-	dialect: 'sqlite',
-	logging: false,
-	// SQLite only
-	storage: 'database.sqlite',
-});
-
-const Users = sequelize.define('users', {
-    id: {
-        type: Sequelize.INTEGER,
-        unique: true,
-        primaryKey: true
-    },    
-    username: {
-        type: Sequelize.STRING,
-    },
-    count: {
-        type: Sequelize.INTEGER,
-    }
-})
+const Users = sequelize.model('user');
 
 const createCanvas = async (member) => {
     const canvas = Canvas.createCanvas(700, 250);

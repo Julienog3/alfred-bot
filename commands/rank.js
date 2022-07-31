@@ -1,28 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { MessageEmbed } = require('discord.js');
-const Sequelize = require('sequelize');
+const sequelize = require('../sequelize');
 
-const sequelize = new Sequelize('database', 'user', 'password', {
-	host: 'localhost',
-	dialect: 'sqlite',
-	logging: false,
-	// SQLite only
-	storage: 'database.sqlite',
-});
-
-const Users = sequelize.define('users', {
-    id: {
-        type: Sequelize.INTEGER,
-        unique: true,
-        primaryKey: true
-    },    
-    username: {
-        type: Sequelize.STRING,
-    },
-    count: {
-        type: Sequelize.INTEGER,
-    }
-})
+const Users = sequelize.model('user');
 
 module.exports = {
 	data: new SlashCommandBuilder()
