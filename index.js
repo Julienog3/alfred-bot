@@ -1,11 +1,14 @@
 // Require the necessary discord.js classes
 const { ETwitterStreamEvent, TweetStream, TwitterApi, ETwitterApiError } = require('twitter-api-v2');
-const { Client, Intents, MessageEmbed, MessageAttachment  } = require('discord.js');
+const { Client, Intents, MessageEmbed, MessageAttachment, Collection  } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const Sequelize = require('sequelize');
 const Canvas = require('canvas');
+
+const fs = require('node:fs');
+const path = require('node:path');
 
 require('dotenv').config()
 
@@ -44,21 +47,18 @@ const client = new Client({
     intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_PRESENCES],
 });
 
+client.commands = new Collection();
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+commandFiles.map((file) => {
+    const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
+})
+
 // Create client Twitter
 const twitterClient = new TwitterApi(process.env.BEARER_TOKEN, { httpsAgent });
-
-const commands = [
-	new SlashCommandBuilder().setName('rank').setDescription('Renvoi le classement des quoi'),
-    new SlashCommandBuilder().setName('profile').setDescription('Montre le deep profil discord'),
-]
-	.map(command => command.toJSON());
-
-const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
-
-
-rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), { body: commands })
-	.then(() => console.log('Successfully registered application commands.'))
-	.catch(console.error);
 
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
@@ -142,92 +142,19 @@ client.once('ready', async () => {
 // Login to Discord with your client's token
 client.login(process.env.TOKEN);
 
-
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isCommand()) return;
 
-	const { commandName } = interaction;
-	
-    if (commandName === 'rank') {
-
-        let userList = await Users.findAll({ attributes: ['username', 'count'], limit: 3, order: [['count', 'DESC']] } );
-
-        const medals = ['🥇', '🥈', '🥉']
-        const fields = []
-
-        userList.map((user, i) => {
-            let field = {
-                "name": `${medals[i]} ${user.username}`,
-                "value": `${user.count} quoi`
-            }
-
-            fields.push(field)
-        })       
-
-        const rankEmbed = new MessageEmbed()
-            .setColor('#0099ff')
-            .setTitle('Leaderboard')
-            .setAuthor({ name: 'AlfredBot', iconURL: 'https://i1.sndcdn.com/avatars-MmuJFpzZtMItCYzd-3DJJqQ-t500x500.jpg' })
-            .setFields(fields)
-            .setTimestamp()
-            .setFooter({ text: 'AlfredBot', iconURL: 'https://i1.sndcdn.com/avatars-MmuJFpzZtMItCYzd-3DJJqQ-t500x500.jpg' });
-
-		await interaction.reply({ embeds: [rankEmbed] });
-	} 
-
-    const applyText = (canvas, text) => {
-        const context = canvas.getContext('2d');
+    const command = client.commands.get(interaction.commandName);    
     
-        // Declare a base size of the font
-        let fontSize = 70;
-    
-        do {
-            // Assign the font to the context and decrement it so it can be measured again
-            context.font = `${fontSize -= 10}px sans-serif`;
-            // Compare pixel width of the text to the canvas minus the approximate avatar size
-        } while (context.measureText(text).width > canvas.width - 300);
-    
-        // Return the result to use in the actual canvas
-        return context.font;
-    };
+	if (!command) return;
 
-    if (commandName === 'profile') {
-        let user = await Users.findOne({ where: { id: interaction.member.id } })
-
-        const canvas = Canvas.createCanvas(700, 250);
-		const context = canvas.getContext('2d');
-
-        const background = await Canvas.loadImage('./wallpaper.jpg');
-
-        
-        context.drawImage(background, 0, 0, canvas.width, canvas.height);
-        
-        context.rect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = "rgba(0, 0, 0, 0.5)";
-        context.fill();
-
-        const avatar = await Canvas.loadImage(interaction.user.displayAvatarURL({ format: 'jpg' }));
-
-        // Slightly smaller text placed above the member's display name
-        context.font = '28px sans-serif';
-        context.fillStyle = '#ffffff';
-        context.fillText(`${user.count} quoi`, canvas.width / 2.5, canvas.height / 1.4);
-
-        context.font = applyText(canvas, interaction.member.displayName);
-        context.fillStyle = '#ffffff';
-        context.fillText(interaction.member.displayName , canvas.width / 2.5, canvas.height / 1.8);
-
-        context.beginPath();
-        context.arc(125, 125, 100, 0, Math.PI * 2, true);
-        context.closePath();
-        context.clip();
-
-        context.drawImage(avatar, 25, 25, 200, 200);
-
-        const attachment = new MessageAttachment(canvas.toBuffer(), 'profile-image.png');
-
-        interaction.reply({ files: [attachment] });
-    }
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+	}   
 });
 
 client.on('messageCreate', async (msg) => {
