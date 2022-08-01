@@ -52,7 +52,7 @@ client.once('ready', async () => {
         status: "online"
     })
 
-    Users.sync();
+    sequelize.sync({ force: false, alter: true })
 
     //const user = await twitterClient.v2.userByUsername('lowkeypack')
 
