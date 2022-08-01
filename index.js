@@ -54,6 +54,8 @@ client.once('ready', async () => {
 
     sequelize.sync({ force: false, alter: true })
 
+    Users.update({ money: 0 }, { where: { money: null } })
+
     //const user = await twitterClient.v2.userByUsername('lowkeypack')
 
     await twitterClient.v2.updateStreamRules({
