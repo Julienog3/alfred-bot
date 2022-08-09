@@ -3,6 +3,8 @@ const { HttpsProxyAgent } = require('https-proxy-agent');
 const { MessageEmbed } = require("discord.js");
 const sequelize = require('../sequelize');
 
+
+
 require('dotenv').config();
 
 const proxy = process.env.HTTP_PROXY || 'https://1.1.1.1:3000';
@@ -26,9 +28,9 @@ module.exports = {
             status: "online"
         })
     
-        sequelize.sync({ force: false, alter: true })
+        sequelize.sync({ force: false, alter: true });
     
-        Users.update({ money: 0 }, { where: { money: null } })
+        Users.update({ money: 0 }, { where: { money: null } });
     
         //const user = await twitterClient.v2.userByUsername('lowkeypack')
     
