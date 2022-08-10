@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
-const { Client } = require("@notionhq/client")
+const { Client } = require("@notionhq/client");
+const { MessageAttachment } = require('discord.js');
 
 require('dotenv').config();
 
@@ -42,7 +43,13 @@ const fromNotionPages = (notionPage) => {
 
 const getArtists = async () => {
     const notionPages = await notion.databases.query({ database_id: databaseId }).then((res) => res.results);
-    return notionPages.map(fromNotionPages);
+    return notionPages;
+}
+
+
+const getProperties = async (pageId, propertyId) => {    
+    const response = await notion.pages.properties.retrieve({ page_id: pageId, property_id: propertyId });
+    return response;
 }
 
 
@@ -51,8 +58,15 @@ module.exports = {
 		.setName('card')
 		.setDescription('Affiche votre nombre de Deep Coin'),
 	async execute(interaction) {
-        const artists = getArtists();
+        const artists = await getArtists();
 
-		return interaction.reply(`card`);
+        // console.log(artists[0].properties.Name)
+
+        const image = await getProperties(artists[Math.floor(Math.random() * artists.length)].id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url)
+        
+        const attachment = new MessageAttachment(image)
+
+		return interaction.reply({ files: [attachment] });
 	},
 };
+
