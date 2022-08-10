@@ -24,6 +24,7 @@ module.exports = {
                             id: msg.author.id,
                             username: msg.author.username,
                         })
+                        user.increment('count')
                     } catch(error) {        
                         console.log(error);
                     }

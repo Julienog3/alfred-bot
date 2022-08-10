@@ -16,6 +16,10 @@ module.exports = (sequelize) => {
         money: {
             type: DataTypes.INTEGER,
             defaultValues: 0,
+        },
+        cards: {
+            type: DataTypes.INTEGER,
+            defaultValues: 3, 
         }
     });
 }
