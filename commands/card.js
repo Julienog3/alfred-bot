@@ -2,11 +2,39 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
 const { Client } = require("@notionhq/client");
-const { MessageAttachment } = require('discord.js');
+const { MessageAttachment, MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
 require('dotenv').config();
 
 const Users = sequelize.model('user');
+
+const rarities = [
+    {
+        name: 'Commune',
+        color: '#707070',
+        probability: '100'
+    },
+    {
+        name: 'Peu commune',
+        color: '#009e35',
+        probability: '50'
+    },
+    {
+        name: 'Rare',
+        color: '#0073ff',
+        probability: '25'
+    },
+    {
+        name: 'Epique',
+        color: '#b300ff',
+        probability: '10'
+    },
+    {
+        name: 'Légendaire',
+        color: '#ffd000',
+        probability: '1'
+    },
+]
 
 const notion = new Client({
     auth: process.env.NOTION_TOKEN,
@@ -14,36 +42,16 @@ const notion = new Client({
 
 const databaseId = process.env.NOTION_DATABASE_ID
 
-const getDatabase = async () => {
-    const response = await notion.databases.retrieve({
-        database_id: databaseId
-    })
-    return response
-}
-
-const notionPropertiesById = (properties) => {
-    return Object.values(properties).reduce((obj, property) => {
-        const { id, ...rest } = property
-        return { obj, [id]: rest }
-    })
-}
-
-const fromNotionPages = (notionPage) => {
-    const propertiesById = notionPropertiesById(notionPage.properties);
-
-    console.log(notionPage)
-
-    return {
-        id: notionPage.id,
-        // name: propertiesById[process.env.NOTION_NAME_ID].title[0].plain_text,
-        // image: propertiesById[process.env.NOTION_IMAGE_ID].image,
-        // rarity: propertiesById[process.env.NOTION_RARITY_ID].select
-    }
-}
-
 const getArtists = async () => {
     const notionPages = await notion.databases.query({ database_id: databaseId }).then((res) => res.results);
     return notionPages;
+}
+
+const getRarity = () => {
+    const roll = Math.floor(Math.random() * 100);
+
+    const res = rarities.filter(({ probability }) => roll <= probability).sort((a, b) => a.probability - b.probability)
+    return res[0];
 }
 
 
@@ -56,17 +64,42 @@ const getProperties = async (pageId, propertyId) => {
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('card')
-		.setDescription('Affiche votre nombre de Deep Coin'),
+		.setDescription('Donne une carte aléatoire représentant un artiste'),
 	async execute(interaction) {
+        await interaction.deferReply();
+
         const artists = await getArtists();
 
-        // console.log(artists[0].properties.Name)
+        const selectedArtist = artists[Math.floor(Math.random() * artists.length)]
 
-        const image = await getProperties(artists[Math.floor(Math.random() * artists.length)].id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url)
-        
-        const attachment = new MessageAttachment(image)
+        const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content)
+        const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url)
 
-		return interaction.reply({ files: [attachment] });
+        const rarity = getRarity();
+
+        const row = new MessageActionRow()
+			.addComponents(
+				new MessageButton()
+					.setCustomId('collect')
+					.setLabel('Récupérer')
+					.setStyle('SUCCESS'),
+			)
+            .addComponents(
+				new MessageButton()
+					.setCustomId('sell')
+					.setLabel('Vendre')
+					.setStyle('DANGER')
+                    .setEmoji('💰')
+
+			);
+
+        const cardEmbed = new MessageEmbed()
+            .setTitle(`🃏 Vous avez obtenu **${name}**`)
+            .setDescription(`Rareté : ${rarity.name}`)
+            .setColor(rarity.color)
+            .setImage(image)
+
+		return interaction.editReply({ embeds: [cardEmbed], components: [row] });
 	},
 };
 
