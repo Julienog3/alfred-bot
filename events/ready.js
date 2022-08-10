@@ -2,6 +2,7 @@ const { ETwitterStreamEvent, TwitterApi } = require('twitter-api-v2');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const { MessageEmbed } = require("discord.js");
 const sequelize = require('../sequelize');
+const moment = require('moment');
 
 require('dotenv').config();
 
@@ -26,9 +27,16 @@ module.exports = {
             status: "online"
         })
     
-        sequelize.sync({ force: false, alter: true })
+        sequelize.sync({ force: false, alter: true });
     
-        Users.update({ money: 0 }, { where: { money: null } })
+        Users.update({ money: 0, cards: 3 }, { where: { money: null, cards: null } });
+        
+        const resetCards = async () => {
+            await Users.update({ cards: 3 }, { where: {} });
+        }
+
+        moment("24:00:00", "hh:mm:ss").diff(moment(), 'seconds');
+        setTimeout(resetCards, moment("24:00:00", "hh:mm:ss").diff(moment(), 'seconds'));
     
         //const user = await twitterClient.v2.userByUsername('lowkeypack')
     
