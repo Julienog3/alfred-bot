@@ -10,6 +10,6 @@ module.exports = {
 	async execute(interaction) {
         const { money } = await Users.findOne({ where: { id: interaction.member.id } });
 
-		return interaction.reply(`Vous avez actuellement ${money} 🪙`);
+		return interaction.reply(`Vous avez actuellement **${money}** <:deepcoin:1006995844970586164>`);
 	},
 };
