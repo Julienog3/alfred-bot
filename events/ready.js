@@ -27,12 +27,12 @@ module.exports = {
             status: "online"
         })
     
-        sequelize.sync({ force: false, alter: true });
+        await sequelize.sync({ alter: true }).then(() => console.log('📚 All models are synchronized'));
     
         Users.update({ money: 0, cards: 3 }, { where: { money: null, cards: null } });
         
         const resetCards = async () => {
-            await Users.update({ cards: 3 }, { where: {} });
+            await Users.update({ cards: 3 }, { where: {} }).then(() => '🃏 Cards has been reset');
         }
 
         moment("24:00:00", "hh:mm:ss").diff(moment(), 'seconds');

@@ -10,6 +10,7 @@ const sequelize = new Sequelize('database', 'user', 'password', {
 
 const modelDefiners = [
 	require('./models/user.model'),
+	require('./models/rarity.model'),
 ];
 
 for (const modelDefiner of modelDefiners) {
