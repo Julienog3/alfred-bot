@@ -1,49 +1,49 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
-const { Client } = require("@notionhq/client");
-const { MessageEmbed, MessageActionRow, MessageButton, ComponentType } = require('discord.js');
+const { Client } = require('@notionhq/client');
+const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
 require('dotenv').config();
 
-const { Op } = require("sequelize");
+const { Op } = require('sequelize');
 
 const Users = sequelize.model('user');
-const Rarities = sequelize.model('rarity')
+const Rarities = sequelize.model('rarity');
 
 const notion = new Client({
-    auth: process.env.NOTION_TOKEN,
-})
+	auth: process.env.NOTION_TOKEN,
+});
 
 const databaseId = process.env.NOTION_DATABASE_ID;
 
 const getArtists = async () => {
-    const notionPages = await notion.databases.query({ database_id: databaseId }).then((res) => res.results);
-    return notionPages;
-}
+	const notionPages = await notion.databases.query({ database_id: databaseId }).then((res) => res.results);
+	return notionPages;
+};
 
 const getRarity = async () => {
-    const roll = Math.floor(Math.random() * 100);
+	const roll = Math.floor(Math.random() * 100);
 
-    const res = await Rarities.findAll({ 
-        where: { 
-            probability: { 
-                [Op.gte]: roll, 
-            } 
-        },
-        order: [
-            ['probability', 'ASC']
-        ],
-        raw: true 
-    })
-    return res[0];
-}
+	const res = await Rarities.findAll({
+		where: {
+			probability: {
+				[Op.gte]: roll,
+			},
+		},
+		order: [
+			['probability', 'ASC'],
+		],
+		raw: true,
+	});
+	return res[0];
+};
 
 
-const getProperties = async (pageId, propertyId) => {    
-    const response = await notion.pages.properties.retrieve({ page_id: pageId, property_id: propertyId });
-    return response;
-}
+const getProperties = async (pageId, propertyId) => {
+	const response = await notion.pages.properties.retrieve({ page_id: pageId, property_id: propertyId });
+	return response;
+};
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -51,82 +51,83 @@ module.exports = {
 		.setDescription('Donne une carte aléatoire représentant un artiste'),
 	async execute(interaction) {
 
-        let user = await Users.findOne({ where: { id: interaction.member.id } });
-        
-        const artists = await getArtists();
-        
-        const selectedArtist = artists[Math.floor(Math.random() * artists.length)]
-        
-        const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content)
-        const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url)
-        
-        const rarity = await getRarity();  
+		let user = await Users.findOne({ where: { id: interaction.member.id } });
 
-        const filter = i => i.user.id === interaction.user.id;
+		const artists = await getArtists();
 
-        const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
+		const selectedArtist = artists[Math.floor(Math.random() * artists.length)];
 
-        const coinEmoji = '<:deepcoin:1006995844970586164>';
+		const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
+		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
-        if (!user) {
-            try {
-                user = await Users.create({
-                    id: interaction.member.id,
-                    username: interaction.member.user.username,
-                })
-            } catch (err) {
-                console.log(error); 
-            }
-        }
+		const rarity = await getRarity();
 
-        const cardEmbed = new MessageEmbed()
-            .setTitle(`🃏 Vous avez obtenu **${name}**`)
-            .addFields([
-                { name: 'Rareté', value: rarity.name, inline: false }, 
-                { name: 'Valeur', value: `${rarity.price} ${coinEmoji}`, inline: false },
-            ])
-            .setDescription(`Il ne te reste plus que ${user.cards - 1} carte${user.cards > 1 ? 's' : ''} à ouvrir`)
-            .setColor(rarity.color)
-            .setImage(image)
-        
-        collector.once('collect', async (buttonInteraction) => {
-            console.log(buttonInteraction)
+		const filter = i => i.user.id === interaction.user.id;
 
-            const id = buttonInteraction.customId;
-            
-            if(id === 'sell') {
-                await buttonInteraction.reply({ content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`, ephemeral: true});
-            } else if (id === 'collect') {
-                await buttonInteraction.reply({ content: `Vous avez récupérer **${name} en ${rarity.name}**`, ephemeral: true});
-            }
-        });
+		const collector = interaction.channel.createMessageComponentCollector({ filter, time: 15000 });
 
-        const row = new MessageActionRow()
-            .addComponents(
-                new MessageButton()
-                    .setCustomId('collect')
-                    .setLabel('Récupérer')
-                    .setStyle('SUCCESS'),
-            )
-            .addComponents(
-                new MessageButton()
-                    .setCustomId('sell')
-                    .setLabel('Vendre')
-                    .setStyle('DANGER')
-            );
+		const coinEmoji = '<:deepcoin:1006995844970586164>';
 
-        if (user.cards > 0) {
-            await interaction.deferReply();
+		if (!user) {
+			try {
+				user = await Users.create({
+					id: interaction.member.id,
+					username: interaction.member.user.username,
+				});
+			}
+			catch (err) {
+				console.log(err);
+			}
+		}
 
-            console.log(user.cards);
+		const cardEmbed = new MessageEmbed()
+			.setTitle(`🃏 Vous avez obtenu **${name}**`)
+			.addFields([
+				{ name: 'Rareté', value: rarity.name, inline: false },
+				{ name: 'Valeur', value: `${rarity.price} ${coinEmoji}`, inline: false },
+			])
+			.setDescription(`Il ne te reste plus que ${user.cards - 1} carte${user.cards > 1 ? 's' : ''} à ouvrir`)
+			.setColor(rarity.color)
+			.setImage(image);
 
-            await Users.decrement('cards', { where: { id: interaction.member.id } })
-            await user.save();
+		collector.once('collect', async (buttonInteraction) => {
+			const id = buttonInteraction.customId;
 
-            return interaction.editReply({ embeds: [cardEmbed], components: [row] });
-        } else {
-            return interaction.reply("Désolé tu n'as plus de cartes pour aujourd'hui, reviens demain 👋")
-        }
+			if (id === 'sell') {
+				await buttonInteraction.reply({ content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`, ephemeral: true });
+			}
+			else if (id === 'collect') {
+				await buttonInteraction.reply({ content: `Vous avez récupérer **${name} en ${rarity.name}**`, ephemeral: true });
+			}
+		});
+
+		const row = new MessageActionRow()
+			.addComponents(
+				new MessageButton()
+					.setCustomId('collect')
+					.setLabel('Récupérer')
+					.setStyle('SUCCESS'),
+			)
+			.addComponents(
+				new MessageButton()
+					.setCustomId('sell')
+					.setLabel('Vendre')
+					.setStyle('DANGER'),
+			);
+
+		if (user.cards > 0) {
+			await interaction.deferReply();
+
+			console.log(user.cards);
+
+			await Users.decrement('cards', { where: { id: interaction.member.id } });
+			await user.save();
+
+			return interaction.editReply({ embeds: [cardEmbed], components: [row] });
+		}
+		else {
+			return interaction.reply('Désolé tu n\'as plus de cartes pour aujourd\'hui, reviens demain 👋');
+		}
 	},
 };
 

@@ -8,7 +8,7 @@ module.exports = {
 		.setName('balance')
 		.setDescription('Affiche votre nombre de Deep Coin'),
 	async execute(interaction) {
-        const { money } = await Users.findOne({ where: { id: interaction.member.id } });
+		const { money } = await Users.findOne({ where: { id: interaction.member.id } });
 
 		return interaction.reply(`Vous avez actuellement **${money}** <:deepcoin:1006995844970586164>`);
 	},
