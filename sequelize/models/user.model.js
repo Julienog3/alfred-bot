@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-	sequelize.define('user', {
+	return sequelize.define('user', {
 		id: {
 			type: DataTypes.INTEGER,
 			unique: true,
@@ -22,4 +22,5 @@ module.exports = (sequelize) => {
 			defaultValue: 3,
 		},
 	});
+
 };

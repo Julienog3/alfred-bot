@@ -8,13 +8,16 @@ const sequelize = new Sequelize('database', 'user', 'password', {
 	storage: 'database.sqlite',
 });
 
-const modelDefiners = [
-	require('./models/user.model'),
-	require('./models/rarity.model'),
-];
+const User = require('./models/user.model')(sequelize);
+const Raritie = require('./models/rarity.model')(sequelize);
+const Card = require('./models/card.model')(sequelize);
 
-for (const modelDefiner of modelDefiners) {
-	modelDefiner(sequelize);
-}
+User.hasMany(Card, { 
+	as: 'deck',
+	foreignKey: 'userId'
+	
+});
+Card.belongsTo(User)
+
 
 module.exports = sequelize;

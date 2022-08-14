@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-	return sequelize.define('rarity', {
+	return sequelize.define('card', {
 		id: {
 			type: DataTypes.UUIDV4,
 			unique: true,
@@ -9,19 +9,16 @@ module.exports = (sequelize) => {
 			allowNull: false,
 			defaultValue: DataTypes.UUIDV4,
 		},
-		name: {
-			type: DataTypes.STRING,
-		},
-		color: {
-			type: DataTypes.STRING,
-		},
-		probability: {
+        userId: {
+            type: DataTypes.UUIDV4,
+        },
+		artistId: {
 			type: DataTypes.INTEGER,
 		},
-		price: {
+		rarityId: {
 			type: DataTypes.INTEGER,
 		},
 	}, {
-		timestamps: false,
-	});
+        updatedAt: false
+    });
 };
