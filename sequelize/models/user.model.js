@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
 			type: DataTypes.INTEGER,
 			defaultValue: 0,
 		},
-		cards: {
+		attemps: {
 			type: DataTypes.INTEGER,
 			defaultValue: 3,
 		},

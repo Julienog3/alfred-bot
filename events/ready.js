@@ -27,16 +27,14 @@ module.exports = {
 			status: 'online',
 		});
 
-		await sequelize.sync({ alter: true }).then(() => console.log('📚 All models are synchronized'));
+		Users.update({ money: 0, attemps: 3 }, { where: { money: null, attemps: null } });
 
-		Users.update({ money: 0, cards: 3 }, { where: { money: null, cards: null } });
-
-		const resetCards = async () => {
-			await Users.update({ cards: 3 }, { where: {} }).then(() => '🃏 Cards has been reset');
+		const resetAttemps = async () => {
+			await Users.update({ attemps: 3 }, { where: {} }).then(() => '🃏 Cards has been reset');
 		};
 
 		moment('24:00:00', 'hh:mm:ss').diff(moment(), 'seconds');
-		setTimeout(resetCards, moment('24:00:00', 'hh:mm:ss').diff(moment(), 'seconds'));
+		setTimeout(resetAttemps, moment('24:00:00', 'hh:mm:ss').diff(moment(), 'seconds'));
 
 		// const user = await twitterClient.v2.userByUsername('lowkeypack')
 

@@ -87,7 +87,7 @@ module.exports = {
 				{ name: 'Rareté', value: rarity.name, inline: false },
 				{ name: 'Valeur', value: `${rarity.price} ${coinEmoji}`, inline: false },
 			])
-			.setDescription(`Il ne te reste plus que ${user.cards - 1} carte${user.cards > 1 ? 's' : ''} à ouvrir`)
+			.setDescription(`Il ne te reste plus que ${user.attemps - 1} carte${user.attemps > 1 ? 's' : ''} à ouvrir`)
 			.setColor(rarity.color)
 			.setImage(image);
 
@@ -100,7 +100,7 @@ module.exports = {
 				await buttonInteraction.reply({ content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`, ephemeral: true });
 			}
 			else if (id === 'collect') {
-                const card = await Cards.create({ 
+                const card = await user.createCard({ 
                     userId: interaction.member.id,
                     artistId: selectedArtist.id,
                     rarityId: rarity.id
@@ -124,10 +124,10 @@ module.exports = {
 					.setStyle('DANGER'),
 			);
 
-		if (user.cards > 0) {
+		if (user.attemps > 0) {
 			await interaction.deferReply();
 
-			await Users.decrement('cards', { where: { id: interaction.member.id } });
+			await Users.decrement('attemps', { where: { id: interaction.member.id } });
 			await user.save();
 
 			return interaction.editReply({ embeds: [cardEmbed], components: [row] });
