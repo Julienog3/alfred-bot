@@ -1,23 +1,22 @@
 const { ETwitterStreamEvent, TwitterApi } = require('twitter-api-v2');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const { MessageEmbed } = require('discord.js');
-const sequelize = require('../sequelize');
-const moment = require('moment');
 
 require('dotenv').config();
+
 
 const proxy = process.env.HTTP_PROXY || 'https://1.1.1.1:3000';
 const httpsAgent = new HttpsProxyAgent(proxy);
 
 const twitterClient = new TwitterApi(process.env.BEARER_TOKEN, { httpsAgent });
 
-const Users = sequelize.model('user');
-
 module.exports = {
 	name: 'ready',
 	once: true,
 	async execute(client) {
 		console.log(`🏁 Ready at ${new Date(client.readyTimestamp).toLocaleString()}`);
+
+		require('../cron-task');
 
 		client.user.setPresence({
 			activities: [{
@@ -27,14 +26,7 @@ module.exports = {
 			status: 'online',
 		});
 
-		Users.update({ money: 0, attemps: 3 }, { where: { money: null, attemps: null } });
-
-		const resetAttemps = async () => {
-			await Users.update({ attemps: 3 }, { where: {} }).then(() => '🃏 Cards has been reset');
-		};
-
-		moment('24:00:00', 'hh:mm:ss').diff(moment(), 'seconds');
-		setTimeout(resetAttemps, moment('24:00:00', 'hh:mm:ss').diff(moment(), 'seconds'));
+		// Users.update({ money: 0, attemps: 3 }, { where: { money: null, attemps: null } });
 
 		// const user = await twitterClient.v2.userByUsername('lowkeypack')
 

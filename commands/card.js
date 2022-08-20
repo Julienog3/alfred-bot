@@ -10,7 +10,6 @@ const { Op } = require('sequelize');
 
 const Users = sequelize.model('user');
 const Rarities = sequelize.model('rarity');
-const Cards = sequelize.model('card');
 
 const notion = new Client({
 	auth: process.env.NOTION_TOKEN,
@@ -95,16 +94,16 @@ module.exports = {
 			const id = buttonInteraction.customId;
 
 			if (id === 'sell') {
-                await Users.update({ money: user.money + rarity.price }, { where: { id: interaction.member.id }})
+				await Users.update({ money: user.money + rarity.price }, { where: { id: interaction.member.id } });
 
 				await buttonInteraction.reply({ content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`, ephemeral: true });
 			}
 			else if (id === 'collect') {
-                const card = await user.createCard({ 
-                    userId: interaction.member.id,
-                    artistId: selectedArtist.id,
-                    rarityId: rarity.id
-                })
+				await user.createCard({
+					userId: interaction.member.id,
+					artistId: selectedArtist.id,
+					rarityId: rarity.id,
+				});
 
 				await buttonInteraction.reply({ content: `Vous avez récupérer **${name} en ${rarity.name}**`, ephemeral: true });
 			}

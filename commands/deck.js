@@ -7,7 +7,6 @@ require('dotenv').config();
 
 const { Client } = require('@notionhq/client');
 
-const User = sequelize.model('user');
 const Card = sequelize.model('card');
 const Rarity = sequelize.model('rarity');
 
@@ -25,28 +24,28 @@ module.exports = {
 		.setName('deck')
 		.setDescription('Affiche votre deck de cartes'),
 	async execute(interaction) {
-		
+
 		await interaction.deferReply();
 		const deck = [];
 
-        const cards = await Card.findAll({ where: { userId: interaction.member.id } })
+		const cards = await Card.findAll({ where: { userId: interaction.member.id } });
 
 		await Promise.all(
 			cards.map(async (card) => {
 				const name = await getProperties(card.dataValues.artistId, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
-				const rarity = await Rarity.findOne({ where: { id: card.dataValues.rarityId} })
+				const rarity = await Rarity.findOne({ where: { id: card.dataValues.rarityId } });
 
 				deck.push({
 					name,
 					value: rarity.dataValues.name,
-					inline: false
-				})
-			})
-		)
+					inline: false,
+				});
+			}),
+		);
 
 		const deckEmbed = new MessageEmbed()
 			.setTitle(`Deck de cartes de ${interaction.member.user.username}`)
-			.addFields(deck)
+			.addFields(deck);
 
 		return interaction.editReply({ embeds: [deckEmbed] });
 	},

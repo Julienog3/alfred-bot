@@ -9,9 +9,6 @@ module.exports = (sequelize) => {
 			allowNull: false,
 			defaultValue: DataTypes.UUIDV4,
 		},
-        userId: {
-            type: DataTypes.UUIDV4,
-        },
 		artistId: {
 			type: DataTypes.INTEGER,
 		},
@@ -19,6 +16,6 @@ module.exports = (sequelize) => {
 			type: DataTypes.INTEGER,
 		},
 	}, {
-        updatedAt: false
-    });
+		updatedAt: false,
+	});
 };

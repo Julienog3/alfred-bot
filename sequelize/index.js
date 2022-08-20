@@ -8,10 +8,10 @@ const sequelize = new Sequelize('database', 'user', 'password', {
 });
 
 const User = require('./models/user.model')(sequelize);
-const Raritie = require('./models/rarity.model')(sequelize);
+require('./models/rarity.model')(sequelize);
 const Card = require('./models/card.model')(sequelize);
 
-User.hasMany(Card);
+User.hasMany(Card, { as: 'User' });
 
 sequelize.sync().then(() => console.log('📚 All models are synchronized'));
 
