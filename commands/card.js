@@ -62,15 +62,6 @@ module.exports = {
 
 		const rarity = await getRarity();
 
-		const filter = i => i.user.id === interaction.member.id;
-
-		const collector = interaction.channel.createMessageComponentCollector({
-			filter,
-			componentType: 'BUTTON',
-			time: 300000,
-			max: 1,
-		});
-
 		const coinEmoji = '<:deepcoin:1006995844970586164>';
 
 		if (!user) {
@@ -95,40 +86,9 @@ module.exports = {
 			.setColor(rarity.color)
 			.setImage(image);
 
-		collector.on('collect', async (buttonInteraction) => {
-			const id = buttonInteraction.customId;
-
-			let message;
-
-			await buttonInteraction.deferReply();
-
-			if (id === 'sell') {
-				await Users.update({ money: user.money + rarity.price }, { where: { id: interaction.member.id } });
-
-				message = {
-					content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
-					ephemeral: true,
-				};
-			}
-			else if (id === 'collect') {
-				await user.createCard({
-					userId: interaction.member.id,
-					artistId: selectedArtist.id,
-					rarityId: rarity.id,
-				});
-
-				message = {
-					content: `Vous avez récupérer **${name} en ${rarity.name}**`,
-					ephemeral: true,
-				};
-			}
-
-			await buttonInteraction.editReply(message);
-		});
-
-		collector.on('end', collected => {
-			// console.log(collected.first());
-		});
+		// collector.on('end', collected => {
+		// 	console.log(collected.first());
+		// });
 
 		const row = new MessageActionRow()
 			.addComponents(
@@ -150,7 +110,50 @@ module.exports = {
 			await Users.decrement('attemps', { where: { id: interaction.member.id } });
 			await user.save();
 
-			await interaction.editReply({ embeds: [cardEmbed], components: [row], fetchReply: true });
+			await interaction.editReply({ embeds: [cardEmbed], components: [row], fetchReply: true })
+				.then((msg) => {
+					const filter = i => {
+						return i.user.id === interaction.member.id && i.message.id === msg.id;
+					};
+
+					const collector = msg.channel.createMessageComponentCollector({
+						filter,
+						componentType: 'BUTTON',
+						time: 300000,
+						max: 1,
+					});
+
+					collector.on('collect', async (buttonInteraction) => {
+						const id = buttonInteraction.customId;
+
+						let message;
+
+						await buttonInteraction.deferReply();
+
+						if (id === 'sell') {
+							await Users.update({ money: user.money + rarity.price }, { where: { id: interaction.member.id } });
+
+							message = {
+								content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
+								ephemeral: true,
+							};
+						}
+						else if (id === 'collect') {
+							await user.createCard({
+								userId: interaction.member.id,
+								artistId: selectedArtist.id,
+								rarityId: rarity.id,
+							});
+
+							message = {
+								content: `Vous avez récupérer **${name} en ${rarity.name}**`,
+								ephemeral: true,
+							};
+						}
+
+						await buttonInteraction.followUp(message);
+					});
+				});
 		}
 		else {
 			return interaction.reply({
