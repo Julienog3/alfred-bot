@@ -12,6 +12,7 @@ module.exports = (sequelize) => {
 		},
 		count: {
 			type: DataTypes.INTEGER,
+			defaultValue: 0,
 		},
 		money: {
 			type: DataTypes.INTEGER,
