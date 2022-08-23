@@ -18,7 +18,7 @@ module.exports = {
 
 		require('../cron-task');
 
-		if (process.env.NODE_ENV === 'development') {
+		if (process.env.NODE_ENV === 'production') {
 			client.user.setActivity('WINNTERZUKO DANS LA TCHOP', { type: 'LISTENING' });
 			client.user.setStatus('online');
 		}
