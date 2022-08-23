@@ -13,6 +13,6 @@ const Card = require('./models/card.model')(sequelize);
 
 User.hasMany(Card, { as: 'Card' });
 
-sequelize.sync().then(() => console.log('📚 All models are synchronized'));
+sequelize.sync({ alter: true }).then(() => console.log('📚 All models are synchronized'));
 
 module.exports = sequelize;

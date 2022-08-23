@@ -11,7 +11,7 @@ module.exports = {
 			}
 			catch (error) {
 				console.error(error);
-				await interaction.reply({ content: 'Aïe ! Tu viens de rencontrer un deep problème, envoie un à Julien Auger et dis lui que son bot est éclaté', ephemeral: true });
+				await interaction.reply({ content: 'Aïe ! Tu viens de rencontrer un deep problème, envoie un MP à Ju\' et dis lui que son bot est éclaté', ephemeral: true });
 			}
 		}
 	},

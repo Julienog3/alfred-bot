@@ -18,13 +18,15 @@ module.exports = {
 
 		require('../cron-task');
 
-		client.user.setPresence({
-			activities: [{
-				name: 'WINNTERZUKO DANS LA TCHOP',
-				type: 'LISTENING',
-			}],
-			status: 'online',
-		});
+		if (process.env.NODE_ENV === 'development') {
+			client.user.setActivity('WINNTERZUKO DANS LA TCHOP', { type: 'LISTENING' });
+			client.user.setStatus('online');
+		}
+
+		if (process.env.NODE_ENV === 'development') {
+			client.user.setActivity('🔨 En maintenance', { type: 0 });
+			client.user.setStatus('dnd');
+		}
 
 		// Users.update({ money: 0, attemps: 3 }, { where: { money: null, attemps: null } });
 
