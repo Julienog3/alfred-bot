@@ -4,8 +4,8 @@ module.exports = (sequelize) => {
 	return sequelize.define('user', {
 		id: {
 			type: DataTypes.INTEGER,
-			unique: true,
 			primaryKey: true,
+			allowNull: false,
 		},
 		username: {
 			type: DataTypes.STRING,

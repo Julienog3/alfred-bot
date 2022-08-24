@@ -9,6 +9,7 @@ require('dotenv').config();
 const { Op } = require('sequelize');
 
 const Users = sequelize.model('user');
+const Cards = sequelize.model('card');
 const Rarities = sequelize.model('rarity');
 
 const notion = new Client({
@@ -86,10 +87,6 @@ module.exports = {
 			.setColor(rarity.color)
 			.setImage(image);
 
-		// collector.on('end', collected => {
-		// 	console.log(collected.first());
-		// });
-
 		const row = new MessageActionRow()
 			.addComponents(
 				new MessageButton()
@@ -139,11 +136,15 @@ module.exports = {
 							};
 						}
 						else if (id === 'collect') {
-							await user.createCard({
-								userId: interaction.member.id,
+
+							const card = await Cards.create({
 								artistId: selectedArtist.id,
 								rarityId: rarity.id,
 							});
+
+							if (card) {
+								await user.addCard(card).catch((err) => console.error(err));
+							}
 
 							message = {
 								content: `Vous avez récupérer **${name} en ${rarity.name}**`,
