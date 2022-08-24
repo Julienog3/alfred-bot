@@ -5,11 +5,10 @@ const sequelize = require('../sequelize');
 
 const Users = sequelize.model('user');
 
-const createCanvas = async (member) => {
+const createCanvas = async (member, count) => {
 	const canvas = Canvas.createCanvas(700, 250);
 	const context = canvas.getContext('2d');
 	const background = await Canvas.loadImage('./wallpaper.jpg');
-	const { count } = await Users.findOne({ where: { id: member.id } });
 
 	context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
@@ -72,7 +71,21 @@ module.exports = {
 
 		const { member } = interaction;
 
-		const canvas = await createCanvas(member);
+		let user = await Users.findOne({ where: { id: member.id } });
+
+		if (!user) {
+			try {
+				user = await Users.create({
+					id: interaction.member.id,
+					username: interaction.member.user.username,
+				});
+			}
+			catch (err) {
+				console.log(err);
+			}
+		}
+
+		const canvas = await createCanvas(member, user.count);
 
 		const attachment = new MessageAttachment(canvas.toBuffer(), 'profile-image.png');
 
