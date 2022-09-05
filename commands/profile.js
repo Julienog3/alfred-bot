@@ -1,10 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-// const Canvas = require('canvas');
+const Canvas = require('canvas');
 const { MessageAttachment } = require('discord.js');
-const sequelize = require('../sequelize');
-
-const Users = sequelize.model('user');
-/*
 
 const createCanvas = async (member, count) => {
 	const canvas = Canvas.createCanvas(700, 250);
@@ -63,7 +59,6 @@ const applyText = (canvas, text, size) => {
 	return context.font;
 };
 
-*/
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -73,14 +68,14 @@ module.exports = {
 
 		const { member } = interaction;
 
-		/* const canvas = await createCanvas(member, user.count);
+		const canvas = await createCanvas(member, user.count);
 
 		const attachment = new MessageAttachment(canvas.toBuffer(), 'profile-image.png');
 
-		interaction.reply({ files: [attachment] }); */
-		interaction.reply({
+		interaction.reply({ files: [attachment] });
+		/* interaction.reply({
 			content: `${member.username} possède ${user.count} cartes`,
-		});
+		}); */
 	},
 };
 
