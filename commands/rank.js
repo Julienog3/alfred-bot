@@ -14,7 +14,7 @@ module.exports = {
 		const medals = ['🥇', '🥈', '🥉'];
 		const fields = [];
 
-		userList.map((user, i) => {
+		userList.forEach((user, i) => {
 			const field = {
 				'name': `${medals[i]} ${user.username}`,
 				'value': `${user.count} quoi`,

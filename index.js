@@ -35,6 +35,26 @@ eventFiles.map((file) => {
 	}
 });
 
-
 // Login to Discord with your client's token
 client.login(process.env.TOKEN);
+
+process.on('unhandledRejection', (reason, promise) => {
+	console.error('\n\n========================================= Unhandled Rejection Error ========================================');
+	console.error(reason);
+	console.error(promise);
+	console.error('============================================================================================================\n\n');
+});
+
+process.on('uncaughtException', (error, origin) => {
+	console.error('\n\n========================================= Uncaught Exception Error =========================================');
+	console.error(error);
+	console.error(origin);
+	console.error('============================================================================================================\n\n');
+});
+
+process.on('uncaughtExceptionMonitor', (error, origin) => {
+	console.error('\n\n========================================= Uncaught Exception Error =========================================');
+	console.error(error);
+	console.error(origin);
+	console.error('============================================================================================================\n\n');
+});

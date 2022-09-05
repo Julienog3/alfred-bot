@@ -4,7 +4,6 @@ const { MessageEmbed } = require('discord.js');
 
 require('dotenv').config();
 
-
 const proxy = process.env.HTTP_PROXY || 'https://1.1.1.1:3000';
 const httpsAgent = new HttpsProxyAgent(proxy);
 

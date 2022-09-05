@@ -2,33 +2,23 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
 const { MessageEmbed } = require('discord.js');
+const { getProperties } = require('../utils/notion.service');
 
 require('dotenv').config();
 
-const { Client } = require('@notionhq/client');
-
 const Card = sequelize.model('card');
 const Rarity = sequelize.model('rarity');
-
-const notion = new Client({
-	auth: process.env.NOTION_TOKEN,
-});
-
-const getProperties = async (pageId, propertyId) => {
-	const response = await notion.pages.properties.retrieve({ page_id: pageId, property_id: propertyId });
-	return response;
-};
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('deck')
 		.setDescription('Affiche votre deck de cartes'),
-	async execute(interaction) {
+	async execute(interaction, user) {
 
 		await interaction.deferReply();
 		const deck = [];
 
-		const cards = await Card.findAll({ where: { userId: interaction.member.id } });
+		const cards = await Card.findAll({ where: { userId: user.id } });
 
 		await Promise.all(
 			cards.map(async (card) => {

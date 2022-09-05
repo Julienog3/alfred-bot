@@ -4,9 +4,9 @@ module.exports = (sequelize) => {
 	return sequelize.define('rarity', {
 		id: {
 			type: DataTypes.UUIDV4,
-			// unique: true,
 			primaryKey: true,
 			allowNull: false,
+			defaultValue: DataTypes.UUIDV4,
 		},
 		name: {
 			type: DataTypes.STRING,

@@ -1,9 +1,10 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const Canvas = require('canvas');
+// const Canvas = require('canvas');
 const { MessageAttachment } = require('discord.js');
 const sequelize = require('../sequelize');
 
 const Users = sequelize.model('user');
+/*
 
 const createCanvas = async (member, count) => {
 	const canvas = Canvas.createCanvas(700, 250);
@@ -62,34 +63,24 @@ const applyText = (canvas, text, size) => {
 	return context.font;
 };
 
+*/
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('profile')
 		.setDescription('Montre le deep profil discord'),
-	async execute(interaction) {
+	async execute(interaction, user) {
 
 		const { member } = interaction;
 
-		let user = await Users.findOne({ where: { id: member.id } });
-
-		if (!user) {
-			try {
-				user = await Users.create({
-					id: interaction.member.id,
-					username: interaction.member.user.username,
-				});
-			}
-			catch (err) {
-				console.log(err);
-			}
-		}
-
-		const canvas = await createCanvas(member, user.count);
+		/* const canvas = await createCanvas(member, user.count);
 
 		const attachment = new MessageAttachment(canvas.toBuffer(), 'profile-image.png');
 
-		interaction.reply({ files: [attachment] });
+		interaction.reply({ files: [attachment] }); */
+		interaction.reply({
+			content: `${member.username} possède ${user.count} cartes`,
+		});
 	},
 };
 

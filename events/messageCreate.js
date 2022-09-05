@@ -5,7 +5,7 @@ const Users = sequelize.model('user');
 module.exports = {
 	name: 'messageCreate',
 	async execute(msg) {
-		if (!msg.author.bot) {
+		if (!msg.author.bot && msg.channel.type !== 'dm') {
 
 			let message = msg.content.replace(/ /g, '');
 

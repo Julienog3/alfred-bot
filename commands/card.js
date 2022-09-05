@@ -1,58 +1,24 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
-const { Client } = require('@notionhq/client');
 const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
-require('dotenv').config();
-
-const { Op } = require('sequelize');
-
-const Users = sequelize.model('user');
+const { getArtists, getProperties } = require('../utils/notion.service');
+const { getRarity } = require('../utils/database.service');
 const Cards = sequelize.model('card');
-const Rarities = sequelize.model('rarity');
-
-const notion = new Client({
-	auth: process.env.NOTION_TOKEN,
-});
-
-const databaseId = process.env.NOTION_DATABASE_ID;
-
-const getArtists = async () => {
-	const notionPages = await notion.databases.query({ database_id: databaseId }).then((res) => res.results);
-	return notionPages;
-};
-
-const getRarity = async () => {
-	const roll = Math.floor(Math.random() * 100);
-
-	const res = await Rarities.findAll({
-		where: {
-			probability: {
-				[Op.gte]: roll,
-			},
-		},
-		order: [
-			['probability', 'ASC'],
-		],
-		raw: true,
-	});
-	return res[0];
-};
-
-
-const getProperties = async (pageId, propertyId) => {
-	const response = await notion.pages.properties.retrieve({ page_id: pageId, property_id: propertyId });
-	return response;
-};
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('card')
 		.setDescription('Donne une carte aléatoire représentant un artiste'),
-	async execute(interaction) {
-
-		let user = await Users.findOne({ where: { id: interaction.member.id } });
+	async execute(interaction, user) {
+		await interaction.deferReply();
+		if (user.attemps < 1) {
+			return await interaction.followUp({
+				content: 'Désolé tu n\'as plus de cartes pour aujourd\'hui, reviens demain 👋',
+				ephemeral: true,
+			});
+		}
 
 		const artists = await getArtists();
 
@@ -62,20 +28,7 @@ module.exports = {
 		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
 		const rarity = await getRarity();
-
 		const coinEmoji = '<:deepcoin:1006995844970586164>';
-
-		if (!user) {
-			try {
-				user = await Users.create({
-					id: interaction.member.id,
-					username: interaction.member.user.username,
-				});
-			}
-			catch (err) {
-				console.log(err);
-			}
-		}
 
 		const cardEmbed = new MessageEmbed()
 			.setTitle(`🃏 Vous avez obtenu **${name}**`)
@@ -101,67 +54,76 @@ module.exports = {
 					.setStyle('DANGER'),
 			);
 
-		if (user.attemps > 0) {
-			await interaction.deferReply();
+		const disabledRow = new MessageActionRow()
+			.addComponents(
+				new MessageButton()
+					.setCustomId('collect')
+					.setLabel('Récupérer')
+					.setDisabled(true)
+					.setStyle('SUCCESS'),
+			)
+			.addComponents(
+				new MessageButton()
+					.setCustomId('sell')
+					.setLabel('Vendre')
+					.setDisabled(true)
+					.setStyle('DANGER'),
+			);
 
-			await Users.decrement('attemps', { where: { id: interaction.member.id } });
-			await user.save();
+		user.attemps -= 1;
+		await user.save();
 
-			await interaction.editReply({ embeds: [cardEmbed], components: [row], fetchReply: true })
-				.then((msg) => {
-					const filter = i => {
-						return i.user.id === interaction.member.id && i.message.id === msg.id;
-					};
+		await interaction.followUp({ embeds: [cardEmbed], components: [row], fetchReply: true })
+			.then((msg) => {
+				const filter = i => {
+					return i.user.id === interaction.member.id && i.message.id === msg.id;
+				};
 
-					const collector = msg.channel.createMessageComponentCollector({
-						filter,
-						componentType: 'BUTTON',
-						time: 300000,
-						max: 1,
-					});
-
-					collector.on('collect', async (buttonInteraction) => {
-						const id = buttonInteraction.customId;
-
-						let message;
-
-						await buttonInteraction.deferReply();
-
-						if (id === 'sell') {
-							await Users.update({ money: user.money + rarity.price }, { where: { id: interaction.member.id } });
-
-							message = {
-								content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
-								ephemeral: true,
-							};
-						}
-						else if (id === 'collect') {
-
-							const card = await Cards.create({
-								artistId: selectedArtist.id,
-								rarityId: rarity.id,
-							});
-
-							if (card) {
-								await user.addCard(card).catch((err) => console.error(err));
-							}
-
-							message = {
-								content: `Vous avez récupérer **${name} en ${rarity.name}**`,
-								ephemeral: true,
-							};
-						}
-
-						await buttonInteraction.followUp(message);
-					});
+				const collector = msg.channel.createMessageComponentCollector({
+					filter,
+					componentType: 'BUTTON',
+					time: 300000,
+					max: 1,
 				});
-		}
-		else {
-			return interaction.reply({
-				content: 'Désolé tu n\'as plus de cartes pour aujourd\'hui, reviens demain 👋',
-				ephemeral: true,
+
+				collector.on('collect', async (buttonInteraction) => {
+					const id = buttonInteraction.customId;
+
+					await buttonInteraction.deferReply();
+					await msg.edit({ embeds: [cardEmbed], components: [disabledRow], fetchReply: true });
+
+					let message;
+
+					if (id === 'sell') {
+						user.money += rarity.price;
+						await user.save();
+
+						message = {
+							content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
+							ephemeral: true,
+						};
+					}
+					else if (id === 'collect') {
+
+						const card = await Cards.create({
+							artistId: selectedArtist.id,
+							rarityId: rarity.id,
+						});
+
+						if (card) {
+							await user.addCard(card).catch((err) => console.error(err));
+							await user.save();
+						}
+
+						message = {
+							content: `Vous avez récupérer **${name} en ${rarity.name}**`,
+							ephemeral: true,
+						};
+					}
+
+					await buttonInteraction.followUp(message);
+				});
 			});
-		}
 	},
 };
 
