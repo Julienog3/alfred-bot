@@ -14,7 +14,7 @@ const Card = require('./models/card.model')(sequelize);
 User.hasMany(Card);
 Card.belongsTo(User);
 
-sequelize.sync({ force: true })
+sequelize.sync()
 	.then(async () => {
 
 		const rarities = [
