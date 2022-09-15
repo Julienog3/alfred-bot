@@ -50,7 +50,7 @@ module.exports = {
 
 		stream.on(ETwitterStreamEvent.Connected, () => console.log('👌 Twitter Stream is OK'));
 
-		await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
+		// await stream.connect({ autoReconnect: true, autoReconnectRetries: Infinity });
 
 		// Awaits for a tweet
 		stream.on(
