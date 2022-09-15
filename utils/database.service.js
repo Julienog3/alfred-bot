@@ -6,9 +6,6 @@ module.exports = {
 	getRarity: async () => {
 		const roll = Math.floor(Math.random() * 100);
 
-		const t = await Rarities.findAll();
-		console.log(t);
-
 		const res = await Rarities.findAll({
 			where: {
 				probability: {
