@@ -24,18 +24,6 @@ module.exports = {
 				if (user) {
 					Users.increment('count', { where: { id: msg.author.id } });
 				}
-				else {
-					try {
-						user = await Users.create({
-							id: msg.author.id,
-							username: msg.author.username,
-						});
-						user.increment('count');
-					}
-					catch (error) {
-						console.log(error);
-					}
-				}
 
 				if (pourcentage <= 5) {
 					msg.reply('drilatère');
