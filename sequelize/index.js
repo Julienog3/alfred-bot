@@ -1,18 +1,20 @@
 const { Sequelize } = require('sequelize');
+require('dotenv').config();
 
-const sequelize = new Sequelize('database', 'user', 'password', {
-	host: 'localhost',
-	dialect: 'sqlite',
-	logging: false,
-	storage: 'database.sqlite',
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+	host: process.env.DB_HOST,
+	dialect: 'postgres',
 });
 
 const User = require('./models/user.model')(sequelize);
 const Rarity = require('./models/rarity.model')(sequelize);
 const Card = require('./models/card.model')(sequelize);
 
+
 User.hasMany(Card);
 Card.belongsTo(User);
+
+sequelize.authenticate().then(() => console.log('🗃️ Database connected'));
 
 sequelize.sync()
 	.then(async () => {

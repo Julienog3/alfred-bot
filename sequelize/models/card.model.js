@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
 	return sequelize.define('card', {
 		id: {
-			type: DataTypes.UUIDV4,
+			type: DataTypes.UUID,
 			primaryKey: true,
 			allowNull: false,
 			defaultValue: DataTypes.UUIDV4,

@@ -23,6 +23,8 @@
     "https-proxy-agent": "^5.0.0",
     "moment": "^2.29.4",
     "node-schedule": "^2.1.0",
+    "pg": "^8.8.0",
+    "pg-hstore": "^2.3.4",
     "sequelize": "^6.17.0",
     "sqlite3": "^5.0.2",
     "twitter-api-v2": "^1.11.0"
