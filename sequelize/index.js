@@ -1,9 +1,14 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-	host: process.env.DB_HOST,
-	dialect: 'postgres',
+// const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+// 	host: process.env.DB_HOST,
+// 	dialect: 'postgres',
+// });
+
+const sequelize = new Sequelize({
+	dialect: 'sqlite',
+	storage: 'database.sqlite',
 });
 
 const User = require('./models/user.model')(sequelize);
