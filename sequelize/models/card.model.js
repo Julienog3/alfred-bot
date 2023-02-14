@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
 			defaultValue: DataTypes.UUIDV4,
 		},
 		artistId: {
-			type: DataTypes.INTEGER,
+			type: DataTypes.STRING,
 		},
 		rarityId: {
 			type: DataTypes.INTEGER,
