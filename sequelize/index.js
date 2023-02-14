@@ -9,6 +9,7 @@ require('dotenv').config();
 const sequelize = new Sequelize({
 	dialect: 'sqlite',
 	storage: 'database.sqlite',
+	logging: false,
 });
 
 const User = require('./models/user.model')(sequelize);
