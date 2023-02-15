@@ -15,6 +15,9 @@ module.exports = {
 		.setDescription('Affiche votre deck de cartes'),
 	async execute(interaction, user) {
 
+		user.attemps += 5;
+		await user.save();
+
 		await interaction.deferReply();
 		const deck = [];
 
@@ -35,7 +38,8 @@ module.exports = {
 			}),
 		);
 
-		console.log('deck', deck);
+		const cardsNb = deck.length;
+
 		deck.sort((a, b) => {
 			return new Date(b.card.dataValues.createdAt) - new Date(a.card.dataValues.createdAt);
 		});
@@ -48,6 +52,8 @@ module.exports = {
 
 		const deckEmbed = new MessageEmbed()
 			.setTitle(`Deck de cartes de ${interaction.member.user.username}`)
+			.setDescription(`🃏 Nombre de cartes : \`${cardsNb}\``)
+			.setThumbnail(interaction.user.displayAvatarURL())
 			.addFields(formatedDeck);
 
 		return interaction.editReply({ embeds: [deckEmbed] });
