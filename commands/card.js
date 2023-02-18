@@ -1,7 +1,8 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
+const Canvas = require('canvas');
 
-const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { MessageEmbed, MessageActionRow, MessageButton, MessageAttachment } = require('discord.js');
 
 const { getArtists, getProperties } = require('../utils/notion.service');
 const { getRarity } = require('../utils/database.service');
@@ -27,6 +28,22 @@ module.exports = {
 		const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
 		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
+		const canvas = Canvas.createCanvas(800, 1200);
+		const context = canvas.getContext('2d');
+
+		// context.fillStyle = 'blue';
+		// context.fillRect(0, 0, canvas.width, canvas.height);
+
+		const artistImage = await Canvas.loadImage(image);
+		const borderImage = await Canvas.loadImage('./images/common.png');
+
+		context.drawImage(artistImage, 0, 0, artistImage.width, artistImage.height, 30, 50, canvas.width - 60, canvas.height - 100);
+
+		context.drawImage(borderImage, 0, 0, canvas.width, canvas.height);
+
+
+		const attachment = new MessageAttachment(canvas.toBuffer(), 'artist-image.png');
+
 		const rarity = await getRarity();
 		const coinEmoji = '<:deepcoin:1006995844970586164>';
 
@@ -38,7 +55,7 @@ module.exports = {
 			])
 			.setDescription(`Il ne te reste plus que ${user.attemps - 1} carte${user.attemps > 1 ? 's' : ''} à ouvrir`)
 			.setColor(rarity.color)
-			.setImage(image);
+			.setImage('attachment://artist-image.png');
 
 		const row = new MessageActionRow()
 			.addComponents(
@@ -73,7 +90,12 @@ module.exports = {
 		user.attemps -= 1;
 		await user.save();
 
-		await interaction.followUp({ embeds: [cardEmbed], components: [row], fetchReply: true })
+		await interaction.followUp({
+			embeds: [cardEmbed],
+			files: [attachment],
+			components: [row],
+			fetchReply: true,
+		})
 			.then((msg) => {
 				const filter = i => {
 					return i.user.id === interaction.member.id && i.message.id === msg.id;
