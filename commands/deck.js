@@ -70,9 +70,6 @@ module.exports = {
 			return array.slice(page * 6, (page + 1) * 6);
 		};
 
-		const filter = i => {
-			return i.user.id === interaction.member.id;
-		};
 
 		const getDeckEmbed = () => {
 			const deckEmbed = new MessageEmbed()
@@ -84,35 +81,38 @@ module.exports = {
 			return deckEmbed;
 		};
 
-		const collector = interaction.channel.createMessageComponentCollector({
-			filter,
-			componentType: 'BUTTON',
-			time: 300000,
+
+		await interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()], fetchReply: true }).then((msg) => {
+			const filter = i => {
+				return i.user.id === interaction.member.id && i.message.id === msg.id;
+			};
+
+			const collector = interaction.channel.createMessageComponentCollector({
+				filter,
+				componentType: 'BUTTON',
+				time: 300000,
+			});
+
+			collector.on('collect', async (buttonInteraction) => {
+				if (!buttonInteraction) {
+					return;
+				}
+
+				buttonInteraction.deferUpdate();
+
+				if (buttonInteraction.customId !== 'previous' && buttonInteraction.customId !== 'next') {
+					return;
+				}
+
+				if (buttonInteraction.customId === 'previous' && currentPage > 0) {
+					currentPage -= 1;
+					await interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
+				}
+				else if (buttonInteraction.customId === 'next') {
+					currentPage += 1;
+					await interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
+				}
+			});
 		});
-
-		collector.on('collect', (buttonInteraction) => {
-			if (!buttonInteraction) {
-				return;
-			}
-
-			buttonInteraction.deferUpdate();
-
-			if (buttonInteraction.customId !== 'previous' && buttonInteraction.customId !== 'next') {
-				return;
-			}
-
-			if (buttonInteraction.customId === 'previous' && currentPage > 0) {
-				currentPage -= 1;
-				interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
-			}
-			else if (buttonInteraction.customId === 'next') {
-				currentPage += 1;
-				interaction.editReply({ content: `${currentPage}`, embeds: [getDeckEmbed()], components: [getButtons()] });
-			}
-
-
-		});
-
-		await interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
 	},
 };
