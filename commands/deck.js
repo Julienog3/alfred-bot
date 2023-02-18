@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const sequelize = require('../sequelize');
 
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 const { getProperties } = require('../utils/notion.service');
 
 require('dotenv').config();
@@ -15,15 +15,14 @@ module.exports = {
 		.setDescription('Affiche votre deck de cartes'),
 	async execute(interaction, user) {
 
-		user.attemps += 5;
-		await user.save();
-
 		await interaction.deferReply();
 		const deck = [];
 
 		const rarityEmojis = ['⚪', '🟢', '🔵', '🟣', '🟡'];
 
 		const cards = await Card.findAll({ where: { userId: user.id } });
+
+		let currentPage = 0;
 
 		await Promise.all(
 			cards.map(async (card) => {
@@ -38,7 +37,24 @@ module.exports = {
 			}),
 		);
 
-		const cardsNb = deck.length;
+		const getButtons = () => {
+			return new MessageActionRow()
+				.addComponents(
+					new MessageButton()
+						.setCustomId('previous')
+						.setEmoji('⬅️')
+						.setStyle('PRIMARY')
+						.setDisabled(currentPage === 0),
+				)
+				.addComponents(
+					new MessageButton()
+						.setCustomId('next')
+						.setEmoji('➡️')
+						.setStyle('PRIMARY')
+						.setDisabled((currentPage + 1) * 6 > deck.length),
+				);
+		};
+
 
 		deck.sort((a, b) => {
 			return new Date(b.card.dataValues.createdAt) - new Date(a.card.dataValues.createdAt);
@@ -50,12 +66,53 @@ module.exports = {
 			inline: false,
 		}));
 
-		const deckEmbed = new MessageEmbed()
-			.setTitle(`Deck de cartes de ${interaction.member.user.username}`)
-			.setDescription(`🃏 Nombre de cartes : \`${cardsNb}\``)
-			.setThumbnail(interaction.user.displayAvatarURL())
-			.addFields(formatedDeck);
+		const getPage = (array, page = 0) => {
+			return array.slice(page * 6, (page + 1) * 6);
+		};
 
-		return interaction.editReply({ embeds: [deckEmbed] });
+		const filter = i => {
+			return i.user.id === interaction.member.id;
+		};
+
+		const getDeckEmbed = () => {
+			const deckEmbed = new MessageEmbed()
+				.setTitle(`Deck de cartes de ${interaction.member.user.username}`)
+				.setDescription(`🃏 Nombre de cartes : \`${deck.length}\``)
+				.setThumbnail(interaction.user.displayAvatarURL())
+				.addFields(getPage(formatedDeck, currentPage));
+
+			return deckEmbed;
+		};
+
+		const collector = interaction.channel.createMessageComponentCollector({
+			filter,
+			componentType: 'BUTTON',
+			time: 300000,
+		});
+
+		collector.on('collect', (buttonInteraction) => {
+			if (!buttonInteraction) {
+				return;
+			}
+
+			buttonInteraction.deferUpdate();
+
+			if (buttonInteraction.customId !== 'previous' && buttonInteraction.customId !== 'next') {
+				return;
+			}
+
+			if (buttonInteraction.customId === 'previous' && currentPage > 0) {
+				currentPage -= 1;
+				interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
+			}
+			else if (buttonInteraction.customId === 'next') {
+				currentPage += 1;
+				interaction.editReply({ content: `${currentPage}`, embeds: [getDeckEmbed()], components: [getButtons()] });
+			}
+
+
+		});
+
+		await interaction.editReply({ embeds: [getDeckEmbed()], components: [getButtons()] });
 	},
 };
