@@ -8,12 +8,29 @@ const { getArtists, getProperties } = require('../utils/notion.service');
 const { getRarity } = require('../utils/database.service');
 const Cards = sequelize.model('card');
 
+const RaritiesBorders = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
+function roundedImage({ ctx, x, y, width, height, radius }) {
+	ctx.beginPath();
+	ctx.moveTo(x + radius, y);
+	ctx.lineTo(x + width - radius, y);
+	ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+	ctx.lineTo(x + width, y + height - radius);
+	ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+	ctx.lineTo(x + radius, y + height);
+	ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+	ctx.lineTo(x, y + radius);
+	ctx.quadraticCurveTo(x, y, x + radius, y);
+	ctx.closePath();
+}
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('card')
 		.setDescription('Donne une carte aléatoire représentant un artiste'),
 	async execute(interaction, user) {
 		await interaction.deferReply();
+
 		if (user.attemps < 1) {
 			return await interaction.followUp({
 				content: 'Désolé tu n\'as plus de cartes pour aujourd\'hui, reviens demain 👋',
@@ -25,27 +42,43 @@ module.exports = {
 
 		const selectedArtist = artists[Math.floor(Math.random() * artists.length)];
 
+		const rarity = await getRarity();
+		const coinEmoji = '<:deepcoin:1006995844970586164>';
+
 		const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
 		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
 		const canvas = Canvas.createCanvas(800, 1200);
 		const context = canvas.getContext('2d');
 
-		// context.fillStyle = 'blue';
-		// context.fillRect(0, 0, canvas.width, canvas.height);
 
 		const artistImage = await Canvas.loadImage(image);
-		const borderImage = await Canvas.loadImage('./images/common.png');
+		const borderImage = await Canvas.loadImage(`./images/${RaritiesBorders[rarity.id - 1]}.png`);
 
-		context.drawImage(artistImage, 0, 0, artistImage.width, artistImage.height, 30, 50, canvas.width - 60, canvas.height - 100);
+		const photoScale = Math.max(canvas.width / artistImage.width, canvas.height / artistImage.height);
+		const photoWidth = artistImage.width * photoScale;
+		const photoHeight = artistImage.height * photoScale;
 
-		context.drawImage(borderImage, 0, 0, canvas.width, canvas.height);
+		const marginTop = (canvas.height - photoHeight) / 2;
+		const marginLeft = (canvas.width - photoWidth) / 2;
+
+		roundedImage({
+			ctx: context,
+			x: 0,
+			y: 0,
+			width: canvas.width,
+			height: canvas.height,
+			radius: 55,
+		});
+		context.clip();
+
+		// context.drawImage(artistImage, marginLeft, marginTop, photoWidth, photoHeight, 30, 50, canvas.width - 60, canvas.height - 100);
+		context.drawImage(artistImage, marginLeft, marginTop, photoWidth, photoHeight);
+		context.drawImage(borderImage, 40, 80, 1692, 2321, 0, 0, canvas.width, canvas.height);
 
 
 		const attachment = new MessageAttachment(canvas.toBuffer(), 'artist-image.png');
 
-		const rarity = await getRarity();
-		const coinEmoji = '<:deepcoin:1006995844970586164>';
 
 		const cardEmbed = new MessageEmbed()
 			.setTitle(`🃏 Vous avez obtenu **${name}**`)
