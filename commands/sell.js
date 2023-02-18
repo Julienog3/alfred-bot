@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { MessageSelectMenu, MessageActionRow, MessageButton } = require('discord.js');
+const { MessageSelectMenu, MessageActionRow } = require('discord.js');
 const sequelize = require('../sequelize');
 const { getProperties } = require('../utils/notion.service');
 
