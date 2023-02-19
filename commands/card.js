@@ -6,6 +6,8 @@ const { MessageEmbed, MessageActionRow, MessageButton, MessageAttachment } = req
 
 const { getArtists, getProperties } = require('../utils/notion.service');
 const { getRarity } = require('../utils/database.service');
+const sharp = require('sharp');
+const axios = require('axios');
 const Cards = sequelize.model('card');
 
 const RaritiesBorders = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -48,11 +50,17 @@ module.exports = {
 		const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
 		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
+		const imageResponse = await axios.get(image, {
+			responseType: 'arraybuffer',
+		}).then((res) => res.data);
+
+		const img = await sharp(imageResponse).toFormat('png').toBuffer();
+
 		const canvas = Canvas.createCanvas(800, 1200);
 		const context = canvas.getContext('2d');
 
 
-		const artistImage = await Canvas.loadImage(image);
+		const artistImage = await Canvas.loadImage(img);
 		const borderImage = await Canvas.loadImage(`./images/${RaritiesBorders[rarity.id - 1]}.png`);
 
 		const photoScale = Math.max(canvas.width / artistImage.width, canvas.height / artistImage.height);
