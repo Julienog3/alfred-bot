@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize');
+const { getAllArtists } = require('../utils/notion.service');
 require('dotenv').config();
 
 // const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
@@ -15,7 +16,7 @@ const sequelize = new Sequelize({
 const User = require('./models/user.model')(sequelize);
 const Rarity = require('./models/rarity.model')(sequelize);
 const Card = require('./models/card.model')(sequelize);
-
+const Artist = require('./models/artist.model')(sequelize);
 
 User.hasMany(Card);
 Card.belongsTo(User);
@@ -24,6 +25,16 @@ sequelize.authenticate().then(() => console.log('🗃️ Database connected'));
 
 sequelize.sync()
 	.then(async () => {
+
+		await getAllArtists().then(async (data) => {
+			data.forEach(async (element) => {
+				await Artist.upsert({
+					id: element.id,
+					name: element.properties.Name.title[0].plain_text,
+					image: element.properties.Image.files[0].file.url,
+				});
+			});
+		});
 
 		const rarities = [
 			await Rarity.upsert({ name: 'Commun', color: '#707070', probability: 100, price: 10 }),
@@ -34,6 +45,7 @@ sequelize.sync()
 		];
 
 		await Promise.all(rarities);
+
 		console.log('📚 All models are synchronized');
 
 		// sequelize.close();
