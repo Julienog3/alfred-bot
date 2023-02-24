@@ -5,7 +5,7 @@ const Canvas = require('canvas');
 const { MessageEmbed, MessageActionRow, MessageButton, MessageAttachment } = require('discord.js');
 
 const { getProperties, getAllArtists } = require('../utils/notion.service');
-const { getRarity } = require('../utils/database.service');
+const { getRarity, getRandomCard } = require('../utils/database.service');
 const sharp = require('sharp');
 const axios = require('axios');
 const Cards = sequelize.model('card');
@@ -40,17 +40,19 @@ module.exports = {
 			});
 		}
 
-		const artists = await getAllArtists();
+		// const artists = await getAllArtists();
 
-		const selectedArtist = artists[Math.floor(Math.random() * artists.length)];
+		// const selectedArtist = artists[Math.floor(Math.random() * artists.length)];
 
 		const rarity = await getRarity();
 		const coinEmoji = '<:deepcoin:1006995844970586164>';
 
-		const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
-		const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
+		const randomArtist = (await getRandomCard())[0].dataValues;
 
-		const imageResponse = await axios.get(image, {
+		// const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
+		// const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
+
+		const imageResponse = await axios.get(randomArtist.image, {
 			responseType: 'arraybuffer',
 		}).then((res) => res.data);
 
@@ -89,7 +91,7 @@ module.exports = {
 
 
 		const cardEmbed = new MessageEmbed()
-			.setTitle(`🃏 Vous avez obtenu **${name}**`)
+			.setTitle(`🃏 Vous avez obtenu **${randomArtist.name}**`)
 			.addFields([
 				{ name: 'Rareté', value: rarity.name, inline: false },
 				{ name: 'Valeur', value: `${rarity.price} ${coinEmoji}`, inline: false },
@@ -162,14 +164,14 @@ module.exports = {
 						await user.save();
 
 						message = {
-							content: `Vous avez vendu **${name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
+							content: `Vous avez vendu **${randomArtist.name} en ${rarity.name}** pour **${rarity.price}** ${coinEmoji}`,
 							ephemeral: true,
 						};
 					}
 					else if (id === 'collect') {
 
 						const card = await Cards.create({
-							artistId: selectedArtist.id,
+							artistId: randomArtist.id,
 							rarityId: rarity.id,
 						});
 
@@ -179,7 +181,7 @@ module.exports = {
 						}
 
 						message = {
-							content: `Vous avez récupérer **${name} en ${rarity.name}**`,
+							content: `Vous avez récupérer **${randomArtist.name} en ${rarity.name}**`,
 							ephemeral: true,
 						};
 					}
