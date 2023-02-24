@@ -4,7 +4,7 @@ const Canvas = require('canvas');
 
 const { MessageEmbed, MessageActionRow, MessageButton, MessageAttachment } = require('discord.js');
 
-const { getArtists, getProperties } = require('../utils/notion.service');
+const { getProperties, getAllArtists } = require('../utils/notion.service');
 const { getRarity } = require('../utils/database.service');
 const sharp = require('sharp');
 const axios = require('axios');
@@ -40,7 +40,7 @@ module.exports = {
 			});
 		}
 
-		const artists = await getArtists();
+		const artists = await getAllArtists();
 
 		const selectedArtist = artists[Math.floor(Math.random() * artists.length)];
 
