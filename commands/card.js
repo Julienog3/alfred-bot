@@ -50,9 +50,9 @@ module.exports = {
 		const randomArtist = (await getRandomCard())[0].dataValues;
 
 		// const name = await getProperties(selectedArtist.id, process.env.NOTION_NAME_ID).then((res) => res.results[0].title.text.content);
-		// const image = await getProperties(selectedArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
+		const image = await getProperties(randomArtist.id, process.env.NOTION_IMAGE_ID).then((res) => res.files[0].file.url);
 
-		const imageResponse = await axios.get(randomArtist.image, {
+		const imageResponse = await axios.get(image, {
 			responseType: 'arraybuffer',
 		}).then((res) => res.data);
 
