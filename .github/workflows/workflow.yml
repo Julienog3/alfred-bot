@@ -22,4 +22,10 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          script: whoami
+          script: |
+            cd deep-bot
+            git fetch
+            git pull
+            git status
+            npm install
+            pm2 restart deep-bot
