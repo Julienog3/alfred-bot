@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
         node-version: [ 16.x ]
 
     steps:
-      - name: SSH Remote Commands
+      - name: Deploy bot on remote VPS
         uses: appleboy/ssh-action@v0.1.7
         with: 
           host: ${{ secrets.HOST }}
@@ -25,9 +25,7 @@ jobs:
           script: |
             export NVM_DIR=~/.nvm
             source ~/.nvm/nvm.sh
-            whoami
             cd deep-bot
-            ls
             git fetch
             git pull
             git status
