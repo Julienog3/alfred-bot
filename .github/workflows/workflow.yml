@@ -23,7 +23,9 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           script: |
+            whoami
             cd deep-bot
+            ls
             git fetch
             git pull
             git status
